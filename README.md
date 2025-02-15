@@ -22,3 +22,5 @@ and he was examining evrerything from the event viewer and after I tried it myse
 and I din't like that, so I thought, 'I'm gonna build a dashboard for this' Haha, and here I am.
 
 If you like it, feel free to contribute. Really, I'm no expert, ... Yet! But I'll get there, and Soon, or in time, whatever.
+
+Adios!
