@@ -22,3 +22,4 @@ and I din't like that, so I thought, 'I'm gonna build a dashboard for this' Haha
 If you like it, feel free to contribute. Really, I'm no expert, ... Yet! But I'll get there, and Soon, or in time, whatever.
 
 Adios!
+![image](https://github.com/user-attachments/assets/89999c23-4744-4b10-8a09-3e7d1d9e446b)
