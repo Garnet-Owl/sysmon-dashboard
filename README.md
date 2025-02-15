@@ -23,3 +23,11 @@ If you like it, feel free to contribute. Really, I'm no expert, ... Yet! But I'l
 
 Adios!
 ![image](https://github.com/user-attachments/assets/89999c23-4744-4b10-8a09-3e7d1d9e446b)
+
+More importantly I have decided to be publishing repos for my small projects so that a future version of myself, and hopefully a more competent one, 
+can always come here and see the progress we have made.
+
+Future self, if you are reading this, know that you don't always get to see the bigger picture, in the present moment, but trust in and remain
+committed to the plans you make.
+
+The key is in consistency. The daily persuit of the highest sense of self you can possibly achieve, eventually pays off.
