@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 import Card from "../ui/Card";
-import { Activity, Globe, HardDrive, Network, Users, Target } from "lucide-react";
+import {
+  Activity,
+  Globe,
+  HardDrive,
+  Network,
+  Users,
+  Target,
+  Clock,
+} from "lucide-react";
 import { useRealtimeData } from "@/app/hooks/useRealtimeData";
-import { SysmonEvent } from "@/app/lib/sysmon";
+import { SysmonEvent, TimeFilter, filterEventsByTime } from "@/app/lib/sysmon";
 import DetailedView from "./DetailedView";
 
 interface Stats {
@@ -25,8 +33,25 @@ interface StatCardProps {
   onClick: () => void;
 }
 
-const StatCard = ({ title, value, icon, className, subtext, onClick }: StatCardProps) => (
-  <Card 
+const timeFilterOptions: { value: TimeFilter; label: string }[] = [
+  { value: "7d", label: "Last 7 Days" },
+  { value: "1d", label: "Last 24 Hours" },
+  { value: "6h", label: "Last 6 Hours" },
+  { value: "1h", label: "Last Hour" },
+  { value: "30m", label: "Last 30 Minutes" },
+  { value: "5m", label: "Last 5 Minutes" },
+  { value: "1m", label: "Last Minute" },
+];
+
+const StatCard = ({
+  title,
+  value,
+  icon,
+  className,
+  subtext,
+  onClick,
+}: StatCardProps) => (
+  <Card
     className="p-4 transition-all duration-200 hover:shadow-md cursor-pointer"
     onClick={onClick}
   >
@@ -36,21 +61,18 @@ const StatCard = ({ title, value, icon, className, subtext, onClick }: StatCardP
         <p className={`text-2xl font-bold mt-2 ${className}`}>
           {value.toLocaleString()}
         </p>
-        {subtext && (
-          <p className="text-sm text-gray-500 mt-1">{subtext}</p>
-        )}
+        {subtext && <p className="text-sm text-gray-500 mt-1">{subtext}</p>}
       </div>
-      <div className={`${className} opacity-80`}>
-        {icon}
-      </div>
+      <div className={`${className} opacity-80`}>{icon}</div>
     </div>
   </Card>
 );
 
 export default function StatsCards() {
   const { data: logs, loading, error } = useRealtimeData();
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("1d");
   const [selectedView, setSelectedView] = useState<{
-    type: 'events' | 'processes' | 'network' | 'files' | 'dns' | 'destinations';
+    type: "events" | "processes" | "network" | "files" | "dns" | "destinations";
     title: string;
   } | null>(null);
 
@@ -86,71 +108,100 @@ export default function StatsCards() {
     );
   }
 
-  // Calculate statistics
-  const uniqueProcesses = new Set(logs.map((log) => log.processId));
+  const filteredLogs = filterEventsByTime(logs, timeFilter);
+
+  // Calculate statistics for filtered logs
+  const uniqueProcesses = new Set(filteredLogs.map((log) => log.processId));
   const uniqueDestinations = new Set(
-    logs
-      .filter((log): log is SysmonEvent & { destinationIp: string } => 
-        'destinationIp' in log
+    filteredLogs
+      .filter(
+        (log): log is SysmonEvent & { destinationIp: string } =>
+          "destinationIp" in log
       )
       .map((log) => log.destinationIp)
   );
 
   const stats = {
-    totalEvents: logs.length,
+    totalEvents: filteredLogs.length,
     uniqueProcesses: uniqueProcesses.size,
-    networkConnections: logs.filter(log => log.eventId === 3).length,
-    fileOperations: logs.filter(log => log.eventId === 11).length,
-    dnsQueries: logs.filter(log => log.eventId === 22).length,
+    networkConnections: filteredLogs.filter((log) => log.eventId === 3).length,
+    fileOperations: filteredLogs.filter((log) => log.eventId === 11).length,
+    dnsQueries: filteredLogs.filter((log) => log.eventId === 22).length,
     uniqueDestinations: uniqueDestinations.size,
   };
 
-  const timeRange = logs.length > 0 ? new Date(logs[0].timestamp).toLocaleTimeString() : 'N/A';
+  const timeRange =
+    filteredLogs.length > 0
+      ? new Date(filteredLogs[0].timestamp).toLocaleTimeString()
+      : "N/A";
 
   return (
     <>
+      <div className="col-span-full mb-4 flex justify-end">
+        <div className="flex items-center space-x-2">
+          <Clock size={16} className="text-gray-500" />
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+            className="px-3 py-1 border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {timeFilterOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <StatCard
         title="Total Events"
         value={stats.totalEvents}
         icon={<Activity size={24} />}
         className="text-blue-600"
         subtext={`Since ${timeRange}`}
-        onClick={() => setSelectedView({ type: 'events', title: 'All Events' })}
+        onClick={() => setSelectedView({ type: "events", title: "All Events" })}
       />
       <StatCard
         title="Unique Processes"
         value={stats.uniqueProcesses}
         icon={<Users size={24} />}
         className="text-green-600"
-        onClick={() => setSelectedView({ type: 'processes', title: 'Process Events' })}
+        onClick={() =>
+          setSelectedView({ type: "processes", title: "Process Events" })
+        }
       />
       <StatCard
         title="Network Connections"
         value={stats.networkConnections}
         icon={<Network size={24} />}
         className="text-purple-600"
-        onClick={() => setSelectedView({ type: 'network', title: 'Network Events' })}
+        onClick={() =>
+          setSelectedView({ type: "network", title: "Network Events" })
+        }
       />
       <StatCard
         title="File Operations"
         value={stats.fileOperations}
         icon={<HardDrive size={24} />}
         className="text-orange-600"
-        onClick={() => setSelectedView({ type: 'files', title: 'File Events' })}
+        onClick={() => setSelectedView({ type: "files", title: "File Events" })}
       />
       <StatCard
         title="DNS Queries"
         value={stats.dnsQueries}
         icon={<Globe size={24} />}
         className="text-indigo-600"
-        onClick={() => setSelectedView({ type: 'dns', title: 'DNS Events' })}
+        onClick={() => setSelectedView({ type: "dns", title: "DNS Events" })}
       />
       <StatCard
         title="Unique Destinations"
         value={stats.uniqueDestinations}
         icon={<Target size={24} />}
         className="text-teal-600"
-        onClick={() => setSelectedView({ type: 'destinations', title: 'Destination Events' })}
+        onClick={() =>
+          setSelectedView({ type: "destinations", title: "Destination Events" })
+        }
       />
 
       {selectedView && (
@@ -159,7 +210,8 @@ export default function StatsCards() {
           onClose={() => setSelectedView(null)}
           title={selectedView.title}
           type={selectedView.type}
-          data={logs}
+          data={filteredLogs}
+          timeFilter={timeFilter}
         />
       )}
     </>

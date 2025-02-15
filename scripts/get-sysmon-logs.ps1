@@ -1,4 +1,5 @@
 # get-sysmon-logs.ps1
+
 $ErrorActionPreference = "Continue"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -15,10 +16,14 @@ try {
         New-Item -ItemType Directory -Path $publicDir -Force | Out-Null
     }
 
-    Write-Host "[PS] Attempting to get Sysmon logs..."
+    Write-Host "[PS] Attempting to get Sysmon logs for the past 7 days..."
     
     try {
-        $events = Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 1000 -ErrorAction Stop
+        # Try to get logs
+        $startDate = (Get-Date).AddDays(-7)
+        $filterXPath = "*[System[TimeCreated[timediff(@SystemTime) <= 604800000]]]"
+        $events = Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -FilterXPath $filterXPath -MaxEvents 5000 -ErrorAction Stop
+        
         Write-Host "[PS] Retrieved $(($events | Measure-Object).Count) Sysmon events"
         
         $logs = $events | ForEach-Object {
@@ -57,16 +62,6 @@ try {
                     $entry.eventType = "dns_query"
                     $entry.queryName = ($eventData | Where-Object { $_.Name -eq 'QueryName' }).'#text'
                     $entry.queryStatus = ($eventData | Where-Object { $_.Name -eq 'QueryStatus' }).'#text'
-                }
-                13 { # RegistryEvent
-                    $entry.eventType = "registry_event"
-                    $entry.targetObject = ($eventData | Where-Object { $_.Name -eq 'TargetObject' }).'#text'
-                    $entry.details = ($eventData | Where-Object { $_.Name -eq 'Details' }).'#text'
-                }
-                7 { # ImageLoad - for executable detection
-                    $entry.eventType = "image_load"
-                    $entry.imageLoaded = ($eventData | Where-Object { $_.Name -eq 'ImageLoaded' }).'#text'
-                    $entry.hashes = ($eventData | Where-Object { $_.Name -eq 'Hashes' }).'#text'
                 }
             }
             

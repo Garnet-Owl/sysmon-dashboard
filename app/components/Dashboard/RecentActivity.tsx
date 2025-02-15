@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Card from "../ui/Card";
-import { Globe, HardDrive, Network } from "lucide-react";
-import { processRecentActivities } from "@/app/lib/sysmon";
+import { Globe, HardDrive, Network, Clock } from "lucide-react";
+import { processRecentActivities, TimeFilter } from "@/app/lib/sysmon";
 import { useRealtimeData } from "@/app/hooks/useRealtimeData";
 
 type TabType = "websites" | "files" | "network";
@@ -15,13 +15,21 @@ interface TabButtonProps {
   onClick: () => void;
 }
 
+const timeFilterOptions: { value: TimeFilter; label: string }[] = [
+  { value: "7d", label: "Last 7 Days" },
+  { value: "1d", label: "Last 24 Hours" },
+  { value: "6h", label: "Last 6 Hours" },
+  { value: "1h", label: "Last Hour" },
+  { value: "30m", label: "Last 30 Minutes" },
+  { value: "5m", label: "Last 5 Minutes" },
+  { value: "1m", label: "Last Minute" },
+];
+
 const TabButton = ({ active, icon, label, onClick }: TabButtonProps) => (
   <button
     onClick={onClick}
     className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-      active
-        ? "bg-blue-100 text-blue-700"
-        : "text-gray-600 hover:bg-gray-100"
+      active ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
     }`}
   >
     {icon}
@@ -32,7 +40,8 @@ const TabButton = ({ active, icon, label, onClick }: TabButtonProps) => (
 export default function RecentActivity() {
   const { data, loading } = useRealtimeData();
   const [activeTab, setActiveTab] = useState<TabType>("websites");
-  const recentData = processRecentActivities(data);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("1d");
+  const recentData = processRecentActivities(data, timeFilter);
 
   if (loading) {
     return (
@@ -53,7 +62,9 @@ export default function RecentActivity() {
     switch (activeTab) {
       case "websites":
         return recentData.websites.length === 0 ? (
-          <div className="text-gray-500 text-center py-4">No recent website activity</div>
+          <div className="text-gray-500 text-center py-4">
+            No recent website activity
+          </div>
         ) : (
           recentData.websites.map((site, index) => (
             <div
@@ -69,7 +80,9 @@ export default function RecentActivity() {
         );
       case "files":
         return recentData.files.length === 0 ? (
-          <div className="text-gray-500 text-center py-4">No recent file activity</div>
+          <div className="text-gray-500 text-center py-4">
+            No recent file activity
+          </div>
         ) : (
           recentData.files.map((file, index) => (
             <div
@@ -85,7 +98,9 @@ export default function RecentActivity() {
         );
       case "network":
         return recentData.network.length === 0 ? (
-          <div className="text-gray-500 text-center py-4">No recent network activity</div>
+          <div className="text-gray-500 text-center py-4">
+            No recent network activity
+          </div>
         ) : (
           recentData.network.map((conn, index) => (
             <div
@@ -106,7 +121,23 @@ export default function RecentActivity() {
 
   return (
     <Card className="p-4">
-      <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Recent Activity</h2>
+        <div className="flex items-center space-x-2">
+          <Clock size={16} className="text-gray-500" />
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+            className="px-3 py-1 border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {timeFilterOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="flex space-x-4 mb-6">
         <TabButton
           active={activeTab === "websites"}

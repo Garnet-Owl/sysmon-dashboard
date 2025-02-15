@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, ExternalLink, Clock, Download } from "lucide-react";
 import Card from "../ui/Card";
-import { SysmonEvent, formatTimestamp } from "@/app/lib/sysmon";
+import { SysmonEvent, formatTimestamp, TimeFilter } from "@/app/lib/sysmon";
 
 interface DetailedViewProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface DetailedViewProps {
   title: string;
   type: "events" | "processes" | "network" | "files" | "dns" | "destinations";
   data: SysmonEvent[];
+  timeFilter: TimeFilter;
 }
 
 const getEventTypeDisplay = (event: SysmonEvent) => {
@@ -87,6 +88,7 @@ export default function DetailedView({
   title,
   type,
   data,
+  timeFilter,
 }: DetailedViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -137,7 +139,7 @@ export default function DetailedView({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sysmon-${type}-${new Date().toISOString()}.json`;
+    a.download = `sysmon-${type}-${timeFilter}-${new Date().toISOString()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -148,7 +150,25 @@ export default function DetailedView({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white rounded-lg shadow-xl">
         <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-xl font-semibold">{title}</h2>
+          <div className="flex items-center space-x-4">
+            <h2 className="text-xl font-semibold">{title}</h2>
+            <span className="text-sm text-gray-500 flex items-center">
+              <Clock size={14} className="mr-1" />
+              {timeFilter === "7d"
+                ? "Last 7 Days"
+                : timeFilter === "1d"
+                ? "Last 24 Hours"
+                : timeFilter === "6h"
+                ? "Last 6 Hours"
+                : timeFilter === "1h"
+                ? "Last Hour"
+                : timeFilter === "30m"
+                ? "Last 30 Minutes"
+                : timeFilter === "5m"
+                ? "Last 5 Minutes"
+                : "Last Minute"}
+            </span>
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
