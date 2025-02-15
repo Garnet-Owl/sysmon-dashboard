@@ -8,22 +8,13 @@ To run the development server:
 npm run dev
 ```
 
-sysmon-dashboard/
-├── app/
-│   ├── api/
-│   │   └── logs/
-│   │       └── route.ts        # API endpoint for fetching Sysmon logs
-│   ├── globals.css             # Global styles
-│   ├── layout.tsx             # Root layout
-│   └── page.tsx               # Main dashboard page
-├── public/                    # Static files (if any)
-├── node_modules/             # Installed dependencies
-├── package.json
-└── tailwind.config.js
+sysmon-dashboard
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Notes: Made this dashboard on a saturday [15th Feb 2025] after I came accross a video from YouTube of a guy,
+Notes:
+
+I Made this dashboard on a saturday [15th Feb 2025] after I came accross a video from YouTube of a guy,
 I think he is a CyberSecurity expert or something, and he was talking about Sysmon - logging tool from Microsoft that lets you log all activity
 foreground and background.
 
