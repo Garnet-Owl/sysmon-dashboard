@@ -1,14 +1,48 @@
-export interface SysmonEvent {
+export interface BaseSysmonEvent {
   timestamp: string;
   eventId: number;
   processId: string;
   image: string;
-  targetFilename?: string;
-  destinationIp?: string;
-  sourceIp?: string;
-  destinationHostname?: string;
-  queryName?: string;
+  eventType: string;
+  category?: string;
 }
+
+export interface ProcessCreateEvent extends BaseSysmonEvent {
+  eventId: 1;
+  eventType: "process_create";
+  commandLine: string;
+  parentImage: string;
+  integrityLevel: string;
+}
+
+export interface NetworkConnectEvent extends BaseSysmonEvent {
+  eventId: 3;
+  eventType: "network_connect";
+  destinationIp: string;
+  sourceIp: string;
+  destinationPort: string;
+  protocol: string;
+  destinationHostname?: string;
+}
+
+export interface FileCreateEvent extends BaseSysmonEvent {
+  eventId: 11;
+  eventType: "file_create";
+  targetFilename: string;
+}
+
+export interface DnsQueryEvent extends BaseSysmonEvent {
+  eventId: 22;
+  eventType: "dns_query";
+  queryName: string;
+  queryStatus: string;
+}
+
+export type SysmonEvent =
+  | ProcessCreateEvent
+  | NetworkConnectEvent
+  | FileCreateEvent
+  | DnsQueryEvent;
 
 interface GraphDataPoint {
   hour: number;
@@ -24,35 +58,38 @@ interface RecentActivity {
 }
 
 export function processLogsForGraph(logs: SysmonEvent[]): GraphDataPoint[] {
-  return logs
-    .reduce((acc: GraphDataPoint[], event) => {
-      const hour = new Date(event.timestamp).getHours();
-      let existing = acc.find((x) => x.hour === hour);
+  const now = new Date();
+  const last24Hours = Array.from({ length: 24 }, (_, i) => {
+    const hour = (now.getHours() - 23 + i + 24) % 24;
+    return {
+      hour,
+      websites: 0,
+      files: 0,
+      network: 0,
+    };
+  });
 
-      if (!existing) {
-        existing = {
-          hour,
-          websites: 0,
-          files: 0,
-          network: 0,
-        };
-        acc.push(existing);
+  logs.forEach((event) => {
+    const eventDate = new Date(event.timestamp);
+    if (now.getTime() - eventDate.getTime() <= 24 * 60 * 60 * 1000) {
+      const hour = eventDate.getHours();
+      const point = last24Hours.find((p) => p.hour === hour);
+      if (point) {
+        if ("queryName" in event) point.websites++;
+        if ("targetFilename" in event) point.files++;
+        if ("destinationIp" in event) point.network++;
       }
+    }
+  });
 
-      if (event.queryName) existing.websites++;
-      if (event.targetFilename) existing.files++;
-      if (event.destinationIp) existing.network++;
-
-      return acc;
-    }, [])
-    .sort((a, b) => a.hour - b.hour);
+  return last24Hours;
 }
 
 export function processRecentActivities(logs: SysmonEvent[]): RecentActivity {
   return {
     websites: logs
-      .filter((event): event is SysmonEvent & { queryName: string } =>
-        Boolean(event.queryName)
+      .filter(
+        (event): event is DnsQueryEvent => event.eventType === "dns_query"
       )
       .slice(0, 10)
       .map((event) => ({
@@ -61,8 +98,8 @@ export function processRecentActivities(logs: SysmonEvent[]): RecentActivity {
       })),
 
     files: logs
-      .filter((event): event is SysmonEvent & { targetFilename: string } =>
-        Boolean(event.targetFilename)
+      .filter(
+        (event): event is FileCreateEvent => event.eventType === "file_create"
       )
       .slice(0, 10)
       .map((event) => ({
@@ -72,10 +109,8 @@ export function processRecentActivities(logs: SysmonEvent[]): RecentActivity {
 
     network: logs
       .filter(
-        (
-          event
-        ): event is SysmonEvent & { sourceIp: string; destinationIp: string } =>
-          Boolean(event.sourceIp && event.destinationIp)
+        (event): event is NetworkConnectEvent =>
+          event.eventType === "network_connect"
       )
       .slice(0, 10)
       .map((event) => ({
@@ -84,4 +119,29 @@ export function processRecentActivities(logs: SysmonEvent[]): RecentActivity {
         time: new Date(event.timestamp).toLocaleTimeString(),
       })),
   };
+}
+
+export function formatTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
+export function getEventTypeColor(eventType: string): string {
+  switch (eventType) {
+    case "process_create":
+      return "text-blue-600";
+    case "network_connect":
+      return "text-green-600";
+    case "file_create":
+      return "text-purple-600";
+    case "dns_query":
+      return "text-orange-600";
+    default:
+      return "text-gray-600";
+  }
 }
