@@ -14,6 +14,19 @@ pnpm dev
 bun dev
 ```
 
+sysmon-dashboard/
+├── app/
+│   ├── api/
+│   │   └── logs/
+│   │       └── route.ts        # API endpoint for fetching Sysmon logs
+│   ├── globals.css             # Global styles
+│   ├── layout.tsx             # Root layout
+│   └── page.tsx               # Main dashboard page
+├── public/                    # Static files (if any)
+├── node_modules/             # Installed dependencies
+├── package.json
+└── tailwind.config.js
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
