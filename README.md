@@ -23,7 +23,8 @@ and I din't like that, so I thought, 'I'm gonna build a dashboard for this' Haha
 If you like it, feel free to contribute. Really, I'm no expert, ... Yet! But I'll get there, and Soon, or in time, whatever.
 
 Adios!
-![image](https://github.com/user-attachments/assets/89999c23-4744-4b10-8a09-3e7d1d9e446b)
+![image](https://github.com/user-attachments/assets/b5aca0eb-0fa8-46f9-9531-64fcf6051505)
+
 
 More importantly I have decided to be publishing repos for my small projects so that a future version of myself, and hopefully a more competent one, 
 can always come here and see the progress we have made.
