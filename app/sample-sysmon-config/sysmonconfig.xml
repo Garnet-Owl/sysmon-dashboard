@@ -1,0 +1,158 @@
+<Sysmon schemaversion="4.90">
+  <HashAlgorithms>*</HashAlgorithms>
+  <EventFiltering>
+    <!-- Process Creation - Keep user-initiated Microsoft apps -->
+    <RuleGroup name="Process" groupRelation="or">
+      <ProcessCreate onmatch="exclude">
+        <Image condition="begin with">C:\Windows\System32\svchost.exe</Image>
+        <Image condition="begin with">C:\Windows\System32\wininit.exe</Image>
+        <Image condition="begin with">C:\Windows\System32\services.exe</Image>
+        <Image condition="begin with">C:\Windows\System32\csrss.exe</Image>
+        <CommandLine condition="contains">Software Protection Platform</CommandLine>
+        <CommandLine condition="contains">Schedule Scan</CommandLine>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- Script Monitoring -->
+    <RuleGroup name="ScriptMonitoring" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <Image condition="end with">powershell.exe</Image>
+        <Image condition="end with">cmd.exe</Image>
+        <Image condition="end with">wscript.exe</Image>
+        <Image condition="end with">cscript.exe</Image>
+        <Image condition="end with">mshta.exe</Image>
+        <CommandLine condition="contains">.ps1</CommandLine>
+        <CommandLine condition="contains">.vbs</CommandLine>
+        <CommandLine condition="contains">.js</CommandLine>
+        <CommandLine condition="contains">.hta</CommandLine>
+        <CommandLine condition="contains">.bat</CommandLine>
+        <CommandLine condition="contains">.cmd</CommandLine>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- Installation Monitoring -->
+    <RuleGroup name="InstallationMonitoring" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <CommandLine condition="contains">msiexec</CommandLine>
+        <CommandLine condition="contains">setup.exe</CommandLine>
+        <CommandLine condition="contains">install</CommandLine>
+        <Image condition="end with">.msi</Image>
+        <Image condition="contains">setup</Image>
+        <Image condition="contains">install</Image>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- User Management and Permission Changes -->
+    <RuleGroup name="UserManagement" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <Image condition="end with">net.exe</Image>
+        <Image condition="end with">net1.exe</Image>
+        <CommandLine condition="contains">user add</CommandLine>
+        <CommandLine condition="contains">localgroup</CommandLine>
+        <CommandLine condition="contains">usermod</CommandLine>
+        <CommandLine condition="contains">useradd</CommandLine>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- Permission Changes and UAC -->
+    <RuleGroup name="PermissionChanges" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <Image condition="end with">icacls.exe</Image>
+        <Image condition="end with">cacls.exe</Image>
+        <Image condition="end with">xcacls.exe</Image>
+        <CommandLine condition="contains">takeown</CommandLine>
+        <CommandLine condition="contains">runas</CommandLine>
+        <IntegrityLevel condition="is">System</IntegrityLevel>
+        <ParentCommandLine condition="contains">consent.exe</ParentCommandLine>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- File System Activity -->
+    <RuleGroup name="FileSystem" groupRelation="or">
+      <FileCreate onmatch="include">
+        <Image condition="contains">explorer.exe</Image>
+        <Image condition="contains">chrome.exe</Image>
+        <Image condition="contains">firefox.exe</Image>
+        <Image condition="contains">msedge.exe</Image>
+        <Image condition="contains">winword.exe</Image>
+        <Image condition="contains">excel.exe</Image>
+        <Image condition="contains">powerpnt.exe</Image>
+        <Image condition="contains">brave.exe</Image>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- Network Connections - Enhanced Monitoring -->
+    <RuleGroup name="Network" groupRelation="or">
+      <NetworkConnect onmatch="exclude">
+        <Image condition="is">C:\Windows\System32\svchost.exe</Image>
+        <Image condition="is">C:\Windows\System32\lsass.exe</Image>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- DNS Activity - Enhanced -->
+    <RuleGroup name="DNS" groupRelation="or">
+      <DnsQuery onmatch="exclude">
+        <QueryName condition="end with">windowsupdate.com</QueryName>
+        <QueryName condition="end with">microsoft.com</QueryName>
+      </DnsQuery>
+    </RuleGroup>
+
+    <!-- Port Monitoring -->
+    <RuleGroup name="NetworkPorts" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <!-- Common suspicious ports -->
+        <DestinationPort condition="is">4444</DestinationPort>
+        <DestinationPort condition="is">666</DestinationPort>
+        <DestinationPort condition="is">1080</DestinationPort>
+        <DestinationPort condition="is">31337</DestinationPort>
+        <!-- Remote access ports -->
+        <DestinationPort condition="is">3389</DestinationPort>
+        <DestinationPort condition="is">22</DestinationPort>
+        <DestinationPort condition="is">23</DestinationPort>
+        <!-- Web ports -->
+        <DestinationPort condition="is">80</DestinationPort>
+        <DestinationPort condition="is">443</DestinationPort>
+        <DestinationPort condition="is">8080</DestinationPort>
+        <!-- FTP -->
+        <DestinationPort condition="is">20</DestinationPort>
+        <DestinationPort condition="is">21</DestinationPort>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- Named Pipes -->
+    <RuleGroup name="PipeEvents" groupRelation="or">
+      <PipeEvent onmatch="include">
+        <PipeName condition="contains">admin</PipeName>
+        <PipeName condition="contains">remote</PipeName>
+        <PipeName condition="contains">psexec</PipeName>
+      </PipeEvent>
+    </RuleGroup>
+
+    <!-- Registry for Security Changes -->
+    <RuleGroup name="SecurityChanges" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">HKLM\SYSTEM\CurrentControlSet\Services\SecurityHealthService</TargetObject>
+        <TargetObject condition="contains">HKLM\SOFTWARE\Policies\Microsoft\Windows Defender</TargetObject>
+        <TargetObject condition="contains">HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy</TargetObject>
+        <TargetObject condition="contains">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies</TargetObject>
+        <TargetObject condition="contains">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy</TargetObject>
+        <TargetObject condition="contains">HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon</TargetObject>
+        <TargetObject condition="contains">HKLM\SAM\SAM\Domains\Account\Users</TargetObject>
+        <TargetObject condition="contains">HKLM\SYSTEM\CurrentControlSet\Services\SecurityProviders</TargetObject>
+        <TargetObject condition="contains">UserRights</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- Executable File Detection -->
+    <RuleGroup name="ExecutableFiles" groupRelation="or">
+      <FileExecutableDetected onmatch="include">
+        <Image condition="contains">explorer.exe</Image>
+        <Image condition="contains">chrome.exe</Image>
+        <Image condition="contains">firefox.exe</Image>
+        <Image condition="contains">msedge.exe</Image>
+        <Image condition="contains">brave.exe</Image>
+      </FileExecutableDetected>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>
