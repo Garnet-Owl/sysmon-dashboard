@@ -5,6 +5,7 @@ To run the development server:
 ```bash
 npm run dev
 ```
+## TO DO: Add the instructions for installing sysmon using custom configuration file
 
 sysmon-dashboard
 
